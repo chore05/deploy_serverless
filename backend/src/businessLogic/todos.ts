@@ -1,5 +1,4 @@
 import { TodosAccess } from '../dataLayer/todosAcess'
-import { AttachmentUtils } from '../helpers/attachmentUtils';
 import { TodoItem } from '../models/TodoItem'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
@@ -22,16 +21,14 @@ export async function getTodosForUser(userId:string):Promise<TodoItem[]> {
 
 export async function createTodo(userId:string, item:CreateTodoRequest):Promise<TodoItem>{
     const todoId:uuid = uuid.v4();
-    const s3BucketName:string = process.env.ATTACHMENT_S3_BUCKET;
-    const key:string = `${todoId}-img`
     const todo:TodoItem = {
-        'userId': userId,
-        'todoId': todoId,
-        'name': item.name,
-        'createdAt': Date.now().toString(),
-        'dueDate': item.dueDate,
-        'done': false,
-        'attachmentUrl': `https://${s3BucketName}.s3.amazonaws.com/${key}`
+        userId: userId,
+        todoId: todoId,
+        createdAt: new Date().toISOString(),
+        name: item.name,
+        dueDate: item.dueDate,
+        done: false,
+        attachmentUrl: null
     }
     logger.info("Add Todo items to database ...");
     try{
@@ -42,7 +39,7 @@ export async function createTodo(userId:string, item:CreateTodoRequest):Promise<
 }
 
 export async function updateTodo(userId:string, todoId:string, item:UpdateTodoRequest)
-:Promise<UpdateTodoRequest>{
+:Promise<string>{
         logger.info("Updating to item...");
         try{
              return todosAcess.updateTodo(userId, todoId, item)
@@ -52,20 +49,14 @@ export async function updateTodo(userId:string, todoId:string, item:UpdateTodoRe
 }
 
 export async function deleteTodo(userId:string, todoId:string){
-    logger.info("Deleteing todo item...");
+    logger.info("Deleting todo item...");
     try{
-        await todosAcess.deleteTodo(userId, todoId)
+        await todosAcess.deleteTodo(todoId, userId)
     } catch(err){
         logger.error("Error: ", createError(err.message))
     }
 }
 
-export async function createAttachmentPresignedUrl(todoId:string): Promise<string>{
-    logger.info("Creating signed url ...");
-    const attachmentUtils = new AttachmentUtils()
-    try{
-        return await attachmentUtils.createUploadUrl(todoId)
-    } catch(err){
-        logger.error("Error: ", createError(err.message));
-    }
+export async function updateAttachmentUrl(todoId: string, userId: string, attachmentUrl: string): Promise<String> {
+    return todosAcess.updateAttachmentUrl(todoId, userId, attachmentUrl)
 }

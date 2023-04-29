@@ -1,14 +1,20 @@
 import 'source-map-support/register'
 
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import * as middy from 'middy'
-import { cors, httpErrorHandler } from 'middy/middlewares'
+import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
+//import * as middy from 'middy'
+//import middy from '@middy/core'
+//import { cors, httpErrorHandler } from 'middy/middlewares'
+//import cors from '@middy/http-cors'
+//import httpErrorHandler from '@middy/http-error-handler'
 
 import { deleteTodo } from '../../businessLogic/todos'
 import { getUserId } from '../utils'
+import { createLogger } from '../../utils/logger'
 
-export const handler = middy(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+const logger = createLogger('auth')
+
+export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent):Promise<APIGatewayProxyResult> => {
+  logger.info(`deleteTodo call`)
     const todoId = event.pathParameters.todoId
     // Remove a TODO item by id
     const userId = getUserId(event);
@@ -16,17 +22,17 @@ export const handler = middy(
     
     return {
       statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
       body: `Deleted item: ${todoId}`
     }
   }
-)
 
+/*
 handler
   .use(httpErrorHandler())
   .use(
-    cors({
-      credentials: true,
-      origin: '*',
-      headers: true
-    })
+    cors()
   )
+*/
